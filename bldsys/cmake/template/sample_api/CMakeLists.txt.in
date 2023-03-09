@@ -28,3 +28,4 @@ add_sample(
     SHADER_FILES_GLSL
         "triangle.vert"
         "triangle.frag")
+
