@@ -1,0 +1,28 @@
+-- Original
+C:\prog\vulkan\Vulkan-Samples>cmake --build build/windows_ninja --config Debug --target vulkan_samples
+[0/2] Re-checking globbed directories...
+[4/348] Building CXX object third_party\CMakeFiles\astc.dir\astc\Source\astc_compute_variance.cpp.obj
+FAILED: third_party/CMakeFiles/astc.dir/astc/Source/astc_compute_variance.cpp.obj
+sccache C:\PROGRA~1\MICROS~2\2022\COMMUN~1\VC\Tools\MSVC\1434~1.319\bin\Hostx64\x64\cl.exe  /nologo /TP -DNO_STB_IMAGE_IMPLEMENTATION -DROOT_PATH_SIZE=30 -IC:\prog\vulkan\Vulkan-Samples\third_party\astc\Source -IC:\prog\vulkan\Vulkan-Samples\third_party\stb /DWIN32 /D_WINDOWS /GR /EHsc -DDEBUG=0 /Zi /Ob0 /Od /RTC1 -std:c++14 -MDd /showIncludes /Fothird_party\CMakeFiles\astc.dir\astc\Source\astc_compute_variance.cpp.obj /Fdthird_party\CMakeFiles\astc.dir\astc.pdb /FS -c C:\prog\vulkan\Vulkan-Samples\third_party\astc\Source\astc_compute_variance.cpp
+C:\prog\vulkan\Vulkan-Samples\third_party\astc\Source\astc_compute_variance.cpp: fatal error C1041: cannot open program database 'C:\prog\vulkan\Vulkan-Samples\build\windows_ninja\third_party\CMakeFiles\astc.dir\astc.pdb'; if multiple CL.EXE write to the same .PDB file, please use /FS
+
+-- With fix, ninja clean compile, no cache
+Started: 17/03/2023 10:33:16.06
+End: 17/03/2023 10:42:09.45
+C:\prog\vulkan\Vulkan-Samples>sccache --show-stats
+Compile requests                     330
+Compile requests executed            294
+Cache hits                             0
+Cache misses                         294
+Cache misses (C/C++)                 294
+
+-- With fix, ninja clean compile, with cache
+Started: 17/03/2023 10:44:30.97
+End: 17/03/2023 10:46:08.72
+C:\prog\vulkan\Vulkan-Samples>sccache --show-stats
+Compile requests                    330
+Compile requests executed           294
+Cache hits                          294
+Cache hits (C/C++)                  294
+Cache misses                          0
+
