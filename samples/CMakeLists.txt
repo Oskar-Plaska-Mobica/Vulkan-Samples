@@ -83,6 +83,7 @@ set(ORDER_LIST
     "logic_op_dynamic_state"
     "fragment_shader_barycentric"
     "gshader_to_mshader"
+    "hlsl_raytracing_basic"
 
     #Performance Samples
     "swapchain_images"
