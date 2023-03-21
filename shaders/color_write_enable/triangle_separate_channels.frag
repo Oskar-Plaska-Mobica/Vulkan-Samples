@@ -20,10 +20,13 @@ precision mediump float;
 
 layout(location = 0) in vec3 in_color;
 
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out vec4 out_color_r;
+layout(location = 1) out vec4 out_color_g;
+layout(location = 2) out vec4 out_color_b;
 
 void main()
 {
-        out_color = vec4(in_color, 1.0);
-
+        out_color_r = vec4(in_color, 1.0);
+        out_color_g = vec4(in_color, 1.0);
+        out_color_b = vec4(in_color, 1.0);
 }

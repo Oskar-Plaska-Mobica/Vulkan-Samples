@@ -25,7 +25,12 @@
 class ColorWriteEnable : public ApiVulkanSample
 {
   public:
-    bool write_enabled = true;
+    bool r_bit_enabled = true;
+    bool g_bit_enabled = true;
+    bool b_bit_enabled = true;
+    float background_r_value = 0.5f;
+    float background_g_value = 0.5f;
+    float background_b_value = 0.5f;
 
     ColorWriteEnable();
     virtual ~ColorWriteEnable();
@@ -38,6 +43,11 @@ class ColorWriteEnable : public ApiVulkanSample
     void render(float delta_time) override;
     bool prepare(vkb::Platform &platform) override;
     void on_update_ui_overlay(vkb::Drawer &drawer) override;
+    void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+    void setup_render_pass() override;
+    void setup_framebuffer() override;
+
+
 
   private:
     // Sample specific data

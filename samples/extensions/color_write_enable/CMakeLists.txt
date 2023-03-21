@@ -24,7 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
     NAME "ColorWriteEnableEXT sample"
-    DESCRIPTION "Dynamic toggle of a color generation."
+    DESCRIPTION "Dynamic toggle of an attachment generation."
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "color_write_enable/triangle_separate_channels.vert"
+        "color_write_enable/triangle_separate_channels.frag")
