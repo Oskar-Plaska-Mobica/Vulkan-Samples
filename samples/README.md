@@ -295,6 +295,10 @@ Demonstrate how to use logical operations dynamically, which can reduce the numb
 **Extension**: [```VK_KHR_fragment_shader_barycentric```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) <br/>
 Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment.
 
+### [Color write enable](./extensions/color_write_enable)<br/>
+**Extension**: [```VK_EXT_color_write_enable```](https://https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_color_write_enable.html)<br/>
+Demonstrate how to create multiple color blend attachments and then toggle them dynamically.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
