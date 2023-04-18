@@ -269,13 +269,13 @@ void HPPHDR::prepare_offscreen_buffer()
 		// Color attachments
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
+		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		// Depth attachment
 		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate renderpass with references to the color and depth attachments
 		std::array<vk::AttachmentDescription, 3> attachment_descriptions;
 
 		// Init attachment properties
@@ -311,7 +311,7 @@ void HPPHDR::prepare_offscreen_buffer()
 
 		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, nullptr, color_references, nullptr, &depth_reference);
 
-		// Use subpass dependencies for attachment layput transitions
+		// Use subpass dependencies for attachment layout transitions
 		std::array<vk::SubpassDependency, 2> dependencies;
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -371,7 +371,7 @@ void HPPHDR::prepare_offscreen_buffer()
 		// Floating point color attachment
 		filter_pass.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate renderpass with references to the color and depth attachments
 		vk::AttachmentDescription attachment_description;
 
 		// Init attachment properties
@@ -388,7 +388,7 @@ void HPPHDR::prepare_offscreen_buffer()
 
 		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
 
-		// Use subpass dependencies for attachment layput transitions
+		// Use subpass dependencies for attachment layout transitions
 		std::array<vk::SubpassDependency, 2> dependencies;
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -758,7 +758,7 @@ bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 
 	load_assets();
