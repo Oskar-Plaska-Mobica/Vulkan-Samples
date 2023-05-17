@@ -49,7 +49,7 @@ class ColorWriteEnable : public ApiVulkanSample
 
   private:
 	// Sample specific data
-	VkPipeline       triangle_pipeline{};
+    VkPipeline       ui_pipeline{}, red_pipeline{}, green_pipeline{}, blue_pipeline{};
 	VkPipelineLayout triangle_pipeline_layout{};
 };
 
