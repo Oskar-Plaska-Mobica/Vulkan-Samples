@@ -75,10 +75,14 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::mat4 model;
 	} ubo_vs;
 
-	VkPipeline            texturePipeline;
+	VkPipeline            texture_pipeline;
 	VkPipelineLayout      pipeline_layout;
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
+
+	// compute
+	const vkb::Queue* compute_queue;
+	std::vector<uint32_t> queue_families;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();

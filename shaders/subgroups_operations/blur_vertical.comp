@@ -16,13 +16,10 @@
  * limitations under the License.
  */
 
-layout (binding = 1) uniform sampler2D samplerColor;
+ #extension GL_KHR_shader_subgroup_basic : enable
 
-layout (location = 0) in vec2 inUV;
+ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout (location = 0) out vec4 outFragColor;
-
-void main() 
-{
-	outFragColor = texture(samplerColor, inUV);
-}
+ void main()
+ {
+ }

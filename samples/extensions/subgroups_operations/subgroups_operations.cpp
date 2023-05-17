@@ -29,7 +29,7 @@ SubgroupsOperations::~SubgroupsOperations()
 {
 	if (device)
 	{
-		vkDestroyPipeline(get_device().get_handle(), texturePipeline, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), texture_pipeline, nullptr);
 
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
@@ -46,6 +46,17 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	if (!ApiVulkanSample::prepare(platform))
 	{
 		return false;
+	}
+
+	compute_queue = &device->get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
+
+	for (auto &&queue_bit : {VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT})
+	{
+		const auto index = device->get_queue_by_flags(queue_bit, 0).get_family_index();
+		if (std::find(queue_families.cbegin(), queue_families.cend(), index) == queue_families.cend())
+		{
+			queue_families.emplace_back(index);
+		}
 	}
 
 	load_assets();
@@ -69,6 +80,7 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
+	
 }
 
 void SubgroupsOperations::prepare_uniform_buffers()
@@ -337,7 +349,7 @@ void SubgroupsOperations::build_command_buffers()
 
 		// draw texture
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, texturePipeline);
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, texture_pipeline);
 
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
@@ -358,6 +370,7 @@ void SubgroupsOperations::draw()
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(compute_queue->get_handle(), 1, &submit_info, device->request_fence())); // TODO: make sure is ok or fix this
 	ApiVulkanSample::submit_frame();
 }
 
