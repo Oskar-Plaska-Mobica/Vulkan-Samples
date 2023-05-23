@@ -25,12 +25,54 @@
 class ColorWriteEnable : public ApiVulkanSample
 {
   public:
-	bool  r_bit_enabled      = true;
-	bool  g_bit_enabled      = true;
-	bool  b_bit_enabled      = true;
-	float background_r_value = 0.5f;
-	float background_g_value = 0.5f;
-	float background_b_value = 0.5f;
+    struct FrameBufferAttachment
+    {
+        VkImage        image;
+        VkDeviceMemory mem;
+        VkImageView    view;
+        VkFormat       format;
+        void           destroy(VkDevice device)
+        {
+            vkDestroyImageView(device, view, nullptr);
+            vkDestroyImage(device, image, nullptr);
+            vkFreeMemory(device, mem, nullptr);
+        }
+    };
+
+    struct
+    {
+        FrameBufferAttachment red, green, blue;
+    } attachments;
+
+    struct
+    {
+        VkSampler red, green, blue;
+    } samplers;
+
+    struct
+    {
+        VkPipeline color, composition;
+    } pipelines;
+
+    struct
+    {
+        VkPipelineLayout color, composition;
+    } pipeline_layouts;
+
+    struct
+    {
+        VkDescriptorSetLayout color, composition;
+    } descriptor_set_layouts;
+
+    struct {
+          VkDescriptorSet composition;
+    } descriptor_sets;
+
+    void create_attachment(VkFormat format, FrameBufferAttachment *attachment);
+    void create_attachments();
+    void setup_descriptor_pool();
+    void setup_descriptor_set_layout();
+    void setup_descriptor_set();
 
 	ColorWriteEnable();
 	virtual ~ColorWriteEnable();
@@ -49,8 +91,14 @@ class ColorWriteEnable : public ApiVulkanSample
 
   private:
 	// Sample specific data
-    VkPipeline       ui_pipeline{}, red_pipeline{}, green_pipeline{}, blue_pipeline{};
-	VkPipelineLayout triangle_pipeline_layout{};
+    //VkPipelineLayout triangle_pipeline_layout{};
+
+    bool  r_bit_enabled      = true;
+    bool  g_bit_enabled      = true;
+    bool  b_bit_enabled      = true;
+    float background_r_value = 0.0f;
+    float background_g_value = 0.0f;
+    float background_b_value = 0.0f;
 };
 
 std::unique_ptr<vkb::Application> create_color_write_enable();
