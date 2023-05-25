@@ -42,6 +42,7 @@ class ColorWriteEnable : public ApiVulkanSample
     struct
     {
         FrameBufferAttachment red, green, blue;
+        int32_t width, height;
     } attachments;
 
     struct
@@ -78,7 +79,7 @@ class ColorWriteEnable : public ApiVulkanSample
 	virtual ~ColorWriteEnable();
 
 	// Create pipeline
-	void prepare_pipelines();
+    void prepare_pipelines(vkb::Platform &platform);
 
 	// Override basic framework functionality
 	void build_command_buffers() override;
@@ -96,9 +97,9 @@ class ColorWriteEnable : public ApiVulkanSample
     bool  r_bit_enabled      = true;
     bool  g_bit_enabled      = true;
     bool  b_bit_enabled      = true;
-    float background_r_value = 0.0f;
-    float background_g_value = 0.0f;
-    float background_b_value = 0.0f;
+    float background_r_value = 0.5f;
+    float background_g_value = 0.5f;
+    float background_b_value = 0.5f;
 };
 
 std::unique_ptr<vkb::Application> create_color_write_enable();

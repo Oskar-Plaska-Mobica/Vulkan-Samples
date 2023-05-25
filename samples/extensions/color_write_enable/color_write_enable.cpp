@@ -31,14 +31,22 @@ ColorWriteEnable::~ColorWriteEnable()
     if (device)
     {
         vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.color, nullptr);
-        vkDestroyPipeline(get_device().get_handle(), pipelines.color, nullptr);
         vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.composition, nullptr);
-        vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);
-        //vkDestroyPipeline(get_device().get_handle(), green_pipeline, nullptr);
-        //vkDestroyPipeline(get_device().get_handle(), blue_pipeline, nullptr);
-        //vkDestroyPipelineLayout(get_device().get_handle(), triangle_pipeline_layout, nullptr);
-    }
 
+        vkDestroyPipeline(get_device().get_handle(), pipelines.color, nullptr);
+        vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);
+
+        vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.color, nullptr);
+        vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.composition, nullptr);
+
+        vkDestroySampler(get_device().get_handle(), samplers.red, nullptr);
+        vkDestroySampler(get_device().get_handle(), samplers.green, nullptr);
+        vkDestroySampler(get_device().get_handle(), samplers.blue, nullptr);
+
+        attachments.red.destroy(get_device().get_handle());
+        attachments.green.destroy(get_device().get_handle());
+        attachments.blue.destroy(get_device().get_handle());
+    }
 }
 
 void ColorWriteEnable::create_attachment(VkFormat format, FrameBufferAttachment *attachment)
@@ -77,7 +85,7 @@ void ColorWriteEnable::create_attachment(VkFormat format, FrameBufferAttachment 
     image.arrayLayers       = 1;
     image.samples           = VK_SAMPLE_COUNT_1_BIT;
     image.tiling            = VK_IMAGE_TILING_OPTIMAL;
-    image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 
     VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
     VkMemoryRequirements memory_requirements;
@@ -116,7 +124,7 @@ bool ColorWriteEnable::prepare(vkb::Platform &platform)
         return false;
     }
     setup_descriptor_set_layout();
-    prepare_pipelines();
+    prepare_pipelines(platform);
     setup_descriptor_pool();
     setup_descriptor_set();
     build_command_buffers();
@@ -124,7 +132,7 @@ bool ColorWriteEnable::prepare(vkb::Platform &platform)
     return true;
 }
 
-void ColorWriteEnable::prepare_pipelines()
+void ColorWriteEnable::prepare_pipelines(vkb::Platform &platform)
 {
 
     {
@@ -145,9 +153,9 @@ void ColorWriteEnable::prepare_pipelines()
         VkPipelineColorBlendAttachmentState blend_attachment_state   = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
 
 
-        VkPipelineColorBlendAttachmentState red_blend_attachment   = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
-        VkPipelineColorBlendAttachmentState green_blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
-        VkPipelineColorBlendAttachmentState blue_blend_attachment  = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
+        VkPipelineColorBlendAttachmentState red_blend_attachment   = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT , VK_FALSE);
+        VkPipelineColorBlendAttachmentState green_blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_G_BIT , VK_FALSE);
+        VkPipelineColorBlendAttachmentState blue_blend_attachment  = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_B_BIT , VK_FALSE);
         VkPipelineColorBlendAttachmentState blend_attachment[3]    = /*{blend_attachment_state};//*/{red_blend_attachment, green_blend_attachment, blue_blend_attachment};
 
         // Define separate color_write_enable toggle for each color attachment.
@@ -191,25 +199,8 @@ void ColorWriteEnable::prepare_pipelines()
         pipe.pViewportState               = &viewport;
         pipe.pDynamicState                = &dynamic;
         pipe.subpass = 0;
-        //blend_attachment[0] = red_blend_attachment;
-        //pipe.pColorBlendState = &color_blend_state;
+
         VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipe, nullptr, &pipelines.color));
-
-        //    pipe.subpass = 1;
-        //    blend_attachment[0] = red_blend_attachment;
-        //    pipe.pColorBlendState = &color_blend_state;
-        //    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipe, nullptr, &red_pipeline));
-
-        //    pipe.subpass = 2;
-        //    blend_attachment[0] = green_blend_attachment;
-        //    pipe.pColorBlendState = &color_blend_state;
-        //    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipe, nullptr, &green_pipeline));
-
-        //    pipe.subpass = 3;
-        //    blend_attachment[0] = blue_blend_attachment;
-        //    pipe.pColorBlendState = &color_blend_state;
-        //    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipe, nullptr, &blue_pipeline));
-
     }
     {
         VkPipelineLayoutCreateInfo composition_layout_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.composition, 1);
@@ -256,6 +247,14 @@ void ColorWriteEnable::prepare_pipelines()
         pipe.pViewportState               = &viewport;
         pipe.pDynamicState                = &dynamic;
         pipe.subpass = 1;
+
+        width  = get_render_context().get_surface_extent().width;
+        height = get_render_context().get_surface_extent().height;
+
+//        gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), /*stats=*/nullptr, 15.0f, true);
+//        gui->prepare(pipeline_cache, render_pass,
+//                     {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+//                      load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
 
         VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipe, nullptr, &pipelines.composition));
     }
@@ -327,6 +326,9 @@ void ColorWriteEnable::setup_descriptor_set() {
 
 void ColorWriteEnable::setup_render_pass()
 {
+    attachments.width = width;
+    attachments.height = height;
+
     create_attachments();
 
     std::array<VkAttachmentDescription, 4> attachments = {};
@@ -351,7 +353,6 @@ void ColorWriteEnable::setup_render_pass()
     }
     */
 
-    // 1/3/4 color references?
     VkAttachmentReference color_references[4];
     color_references[0] = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     color_references[1] = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
@@ -377,33 +378,8 @@ void ColorWriteEnable::setup_render_pass()
     subpass_descriptions[1].inputAttachmentCount = 3;
     subpass_descriptions[1].pInputAttachments = inputReferences;
 
-
-    //    for (uint32_t i = 0; i < subpass_descriptions.size(); ++i) {
-    //        subpass_descriptions[i].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    //        subpass_descriptions[i].colorAttachmentCount    = static_cast<uint32_t>(color_reference.size());
-    //        subpass_descriptions[i].pColorAttachments       = color_reference.data();
-    //        subpass_descriptions[i].inputAttachmentCount    = 0;
-    //        subpass_descriptions[i].pInputAttachments       = nullptr;
-    //        subpass_descriptions[i].preserveAttachmentCount = 0;
-    //        subpass_descriptions[i].pPreserveAttachments    = nullptr;
-    //        subpass_descriptions[i].pResolveAttachments     = nullptr;
-    //    }
-
     // Subpass dependencies for layout transitions
-    std::array<VkSubpassDependency, 2> dependencies = {};
-
-    //    for (uint32_t i = 0; i < dependencies.size(); ++i) {
-    //        dependencies[i].srcSubpass      = i-1;
-    //        dependencies[i].dstSubpass      = i;
-    //        dependencies[i].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    //        dependencies[i].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-    //        dependencies[i].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-    //        dependencies[i].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    //        dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-    //    }
-
-    //    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    //    dependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
+    std::array<VkSubpassDependency, 3> dependencies = {};
 
     dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
     dependencies[0].dstSubpass = 0;
@@ -413,29 +389,21 @@ void ColorWriteEnable::setup_render_pass()
     dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    //    dependencies[1].srcSubpass = 0;
-    //    dependencies[1].dstSubpass = 1;
-    //    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    //    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    //    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    //    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    //    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-    //    dependencies[2].srcSubpass = 1;
-    //    dependencies[2].dstSubpass = 2;
-    //    dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    //    dependencies[2].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    //    dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    //    dependencies[2].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    //    dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
     dependencies[1].srcSubpass = 0;
-    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].dstSubpass = 1;
     dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    dependencies[2].srcSubpass = 0;
+    dependencies[2].dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[2].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[2].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     VkRenderPassCreateInfo render_pass_create_info = {};
     render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -466,55 +434,31 @@ void ColorWriteEnable::setup_render_pass()
 }
 
 void ColorWriteEnable::setup_framebuffer()
-{   /**
-    //TODO CREATE ATTACHMENTS HERE
+{
+    if(attachments.width != width || attachments.height != height) {
+        attachments.width = width;
+        attachments.height = height;
 
-    std::vector< VkDescriptorImageInfo> descriptor_image_infos = {
-        vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, red_attachment.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
-        vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, green_attachment.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
-        vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, blue_attachment.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-    };
+        attachments.red.destroy(get_device().get_handle());
+        attachments.green.destroy(get_device().get_handle());
+        attachments.blue.destroy(get_device().get_handle());
 
-    std::vector<VkWriteDescriptorSet> write_descriptor_sets;
-    //VkDescriptorSet scene;
-    for (size_t i = 0; i < descriptor_image_infos.size(); i++) {
-        write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(scene_descriptor_set, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, i, &descriptor_image_infos[i]));
+        create_attachments();
+
+        VkDescriptorImageInfo red = vkb::initializers::descriptor_image_info(samplers.red, attachments.red.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkDescriptorImageInfo green = vkb::initializers::descriptor_image_info(samplers.green, attachments.green.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkDescriptorImageInfo blue = vkb::initializers::descriptor_image_info(samplers.blue, attachments.blue.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+            vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &red),
+            vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &green),
+            vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &blue),
+        };
+
+        vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+
+
     }
-
-    vkUpdateDescriptorSets(device->get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-    std::array<VkImageView, 4> attachments = {};
-
-    VkFramebufferCreateInfo framebuffer_create_info = {};
-    framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer_create_info.pNext                   = NULL;
-    framebuffer_create_info.renderPass              = render_pass;
-    framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
-    framebuffer_create_info.pAttachments            = attachments.data();
-    framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
-    framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
-    framebuffer_create_info.layers                  = 1;
-
-    // Delete existing frame buffers
-    for (uint32_t i = 0; i < framebuffers.size(); i++)
-    {
-        if (framebuffers[i] != VK_NULL_HANDLE)
-        {
-            vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
-        }
-    }
-
-    // Create frame buffers for every swap chain image
-    framebuffers.resize(render_context->get_render_frames().size());
-    for (uint32_t i = 0; i < framebuffers.size(); i++)
-    {
-        attachments[0] = red_attachment.view;//swapchain_buffers[i].view;
-        attachments[1] = green_attachment.view;//swapchain_buffers[i].view;
-        attachments[2] = blue_attachment.view;//swapchain_buffers[i].view;
-        attachments[3] = swapchain_buffers[i].view;
-        VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
-    }
-    */
 
     std::array<VkImageView, 4> attachments;
 
@@ -546,8 +490,12 @@ void ColorWriteEnable::build_command_buffers()
 
     // Clear color values.
     std::array<VkClearValue, 4> clear_values = {};
-    for (int32_t i = 0; i < clear_values.size(); ++i)
-        clear_values[i].color                    = {background_r_value, background_g_value, background_b_value, 0.0f};
+ //   clear_values[0].color = {0.0f,  0.0f,  0.0f, 0.0f};
+    clear_values[1].color = {0.0f,  0.0f,  0.0f, 0.0f};
+    clear_values[2].color = {0.0f,  0.0f,  0.0f, 0.0f};
+    clear_values[3].color = {0.0f,  0.0f,  0.0f, 0.0f};
+    clear_values[0].color  = {background_r_value, background_g_value, background_b_value, 0.0f};
+
 
     // Begin the render pass.
     VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -594,10 +542,8 @@ void ColorWriteEnable::build_command_buffers()
 
         vkCmdDraw(cmd, 3, 1, 0, 0);
 
-
         // Draw user interface.
         draw_ui(cmd);
-
 
         // Complete render pass.
         vkCmdEndRenderPass(cmd);
