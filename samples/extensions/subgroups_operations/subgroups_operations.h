@@ -41,7 +41,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void draw();
 	void load_assets();
 
-	void generate_quad();
+	void prepare_graphics();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_set();
@@ -49,6 +49,19 @@ class SubgroupsOperations : public ApiVulkanSample
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void create_command_buffers();
+
+	void prepare_compute();
+	void create_compute_queue();
+	void create_compute_command_pool();
+	void create_compute_command_buffer();
+	void create_compute_descriptor_set_layout();
+	void create_compute_descriptor_set();
+
+	void preapre_compute_pipeline_layout();
+	void prepare_compute_pipeline();
+
+	void build_compute_command_buffer();
+
 
 	struct GuiSettings
 	{
@@ -59,30 +72,33 @@ class SubgroupsOperations : public ApiVulkanSample
 			    {"Blur"}, {"Sharpen"}, {"Edge detection vertical, horizontal, and diagonal"}, {"Canny edge"}};
 			return filtrs;
 		}
-	} guiSettings;
+	} gui_settings;
 
-	Texture                            texture;
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count;
+	struct Pipeline
+	{
+		void destroy(VkDevice device);
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
+		VkPipeline pipeline;
+		VkPipelineLayout pipeline_layout;
+	};
 
 	struct
 	{
-		glm::mat4 projection;
-		glm::mat4 view;
-		glm::mat4 model;
-	} ubo_vs;
+		VkQueue queue;
+		VkCommandPool command_pool;
+		VkCommandBuffer command_buffer;
+		VkSemaphore semaphore;
+		VkDescriptorSetLayout descriptor_set_layout;
+		VkDescriptorSet descriptor_set;
+		uint32_t queue_family_index;
 
-	VkPipeline            texture_pipeline;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       descriptor_set;
-	VkDescriptorSetLayout descriptor_set_layout;
+		struct
+		{
+			Pipeline _default;
+		} pipelines;
+	} compute;
 
-	// compute
-	const vkb::Queue* compute_queue;
-	std::vector<uint32_t> queue_families;
+
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();
