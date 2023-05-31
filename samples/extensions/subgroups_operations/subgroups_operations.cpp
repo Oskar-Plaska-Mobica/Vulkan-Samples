@@ -29,6 +29,9 @@ SubgroupsOperations::SubgroupsOperations()
 	camera.type = vkb::CameraType::LookAt;
 
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
+	add_device_extension(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
+	add_device_extension(VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME);        // is needed???
+	add_device_extension(VK_EXT_SHADER_SUBGROUP_VOTE_EXTENSION_NAME);          // is needed???
 }
 
 SubgroupsOperations::~SubgroupsOperations()
@@ -39,6 +42,7 @@ SubgroupsOperations::~SubgroupsOperations()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), compute.descriptor_set_layout, nullptr);
 		vkDestroySemaphore(get_device().get_handle(), compute.semaphore, nullptr);
 		vkDestroyCommandPool(get_device().get_handle(), compute.command_pool, nullptr);
+		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, nullptr);
 	}
 }
 
@@ -50,6 +54,7 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	}
 
 	load_assets();
+	setup_descriptor_pool();
 	prepare_compute();
 	prepare_graphics();
 
@@ -74,7 +79,7 @@ void SubgroupsOperations::create_compute_queue()
 {
 	// create compute queue and get family index
 	compute.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
-	
+
 	vkGetDeviceQueue(get_device().get_handle(), compute.queue_family_index, 0, &compute.queue);
 }
 
@@ -105,7 +110,8 @@ void SubgroupsOperations::create_compute_command_buffer()
 
 void SubgroupsOperations::create_compute_descriptor_set_layout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs; // TODO: add bindings
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_COMPUTE_BIT, 0)};
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
@@ -117,20 +123,20 @@ void SubgroupsOperations::create_compute_descriptor_set()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &compute.descriptor_set));
 
-	// TODO: add write descriptors
-	std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets = {
+	//// TODO: add write descriptors
+	// std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets = {
 
-	};
+	//};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, nullptr);
+	// vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, nullptr);
 }
 
 void SubgroupsOperations::preapre_compute_pipeline_layout()
 {
 	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
-	compute_pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	compute_pipeline_layout_info.setLayoutCount = 1;
-	compute_pipeline_layout_info.pSetLayouts = &compute.descriptor_set_layout;
+	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	compute_pipeline_layout_info.setLayoutCount             = 1;
+	compute_pipeline_layout_info.pSetLayouts                = &compute.descriptor_set_layout;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &compute.pipelines._default.pipeline_layout));
 }
@@ -138,9 +144,9 @@ void SubgroupsOperations::preapre_compute_pipeline_layout()
 void SubgroupsOperations::prepare_compute_pipeline()
 {
 	VkComputePipelineCreateInfo computeInfo = {};
-	computeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	computeInfo.layout = compute.pipelines._default.pipeline_layout;
-	computeInfo.stage = load_shader("subgroups_operations/test.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	computeInfo.sType                       = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computeInfo.layout                      = compute.pipelines._default.pipeline_layout;
+	computeInfo.stage                       = load_shader("subgroups_operations/test.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &computeInfo, nullptr, &compute.pipelines._default.pipeline));
 }
@@ -148,12 +154,12 @@ void SubgroupsOperations::prepare_compute_pipeline()
 void SubgroupsOperations::build_compute_command_buffer()
 {
 	VkSubmitInfo submit_info = {};
-	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submit_info.sType        = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	vkResetCommandBuffer(compute.command_buffer, 0);
 
 	// record command
 	VkCommandBufferBeginInfo begin_info = {};
-	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
 
 	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipelines._default.pipeline);
@@ -161,11 +167,6 @@ void SubgroupsOperations::build_compute_command_buffer()
 	vkCmdDispatch(compute.command_buffer, 256, 1, 1);
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
-
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers = &compute.command_buffer;
-
-	VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
 }
 
 void SubgroupsOperations::prepare_graphics()
@@ -173,7 +174,6 @@ void SubgroupsOperations::prepare_graphics()
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	setup_pipelines();
-	setup_descriptor_pool();
 	setup_descriptor_set();
 	create_command_buffers();
 	build_command_buffers();
@@ -185,19 +185,22 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
-	
+	subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+	subgroups_properties.pNext = VK_NULL_HANDLE;
+
+	VkPhysicalDeviceProperties2 device_properties2 = {};
+	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	device_properties2.pNext                       = &subgroups_properties;
+	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
 }
 
 void SubgroupsOperations::prepare_uniform_buffers()
 {
-
-
 	update_uniform_buffers();
 }
 
 void SubgroupsOperations::update_uniform_buffers()
 {
-
 }
 
 void SubgroupsOperations::setup_pipelines()
@@ -206,6 +209,12 @@ void SubgroupsOperations::setup_pipelines()
 
 void SubgroupsOperations::setup_descriptor_pool()
 {
+	std::vector<VkDescriptorPoolSize> pool_sizes = {
+
+	};
+
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 4);
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void SubgroupsOperations::setup_descriptor_set_layout()
@@ -216,14 +225,12 @@ void SubgroupsOperations::setup_descriptor_set()
 {
 }
 
-
 void SubgroupsOperations::load_assets()
 {
 }
 
 void SubgroupsOperations::create_command_buffers()
 {
-	
 }
 
 void SubgroupsOperations::build_command_buffers()
@@ -253,7 +260,7 @@ void SubgroupsOperations::build_command_buffers()
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);	
+		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
@@ -263,11 +270,35 @@ void SubgroupsOperations::build_command_buffers()
 
 void SubgroupsOperations::draw()
 {
+	VkPipelineStageFlags graphics_wait_stage_masks[]  = {VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	VkSemaphore          graphics_wait_semaphores[]   = {compute.semaphore, semaphores.acquired_image_ready};
+	VkSemaphore          graphics_signal_semaphores[] = {semaphore, semaphores.render_complete};
+
 	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+	submit_info.commandBufferCount   = 1;
+	submit_info.pCommandBuffers      = &draw_cmd_buffers[current_buffer];
+	submit_info.waitSemaphoreCount   = 2;
+	submit_info.pWaitSemaphores      = graphics_wait_semaphores;
+	submit_info.pWaitDstStageMask    = graphics_wait_stage_masks;
+	submit_info.signalSemaphoreCount = 2;
+	submit_info.pSignalSemaphores    = graphics_signal_semaphores;
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
+
+		// Wait for rendering finished
+	VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
+	// Submit compute commands
+	VkSubmitInfo compute_submit_info         = vkb::initializers::submit_info();
+	compute_submit_info.commandBufferCount   = 1;
+	compute_submit_info.pCommandBuffers      = &compute.command_buffer;
+	compute_submit_info.waitSemaphoreCount   = 1;
+	compute_submit_info.pWaitSemaphores      = &semaphore;
+	compute_submit_info.pWaitDstStageMask    = &wait_stage_mask;
+	compute_submit_info.signalSemaphoreCount = 1;
+	compute_submit_info.pSignalSemaphores    = &compute.semaphore;
+
+	VK_CHECK(vkQueueSubmit(compute.queue, 1, &compute_submit_info, VK_NULL_HANDLE));
 }
 
 void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)

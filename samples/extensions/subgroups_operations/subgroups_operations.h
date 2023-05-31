@@ -62,35 +62,36 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void build_compute_command_buffer();
 
-
 	struct GuiSettings
 	{
 		int32_t                         selected_filtr = 0;
 		static std::vector<std::string> init_filters_name()
 		{
 			std::vector<std::string> filtrs = {
-			    {"Blur"}, {"Sharpen"}, {"Edge detection vertical, horizontal, and diagonal"}, {"Canny edge"}};
+			    {"Blur"}, {"Sharpen"}, {"Edge detection vertical, horizontal, and diagonal", "Custom kernel"}};
 			return filtrs;
 		}
 	} gui_settings;
+
+	VkSemaphore semaphore;
 
 	struct Pipeline
 	{
 		void destroy(VkDevice device);
 
-		VkPipeline pipeline;
+		VkPipeline       pipeline;
 		VkPipelineLayout pipeline_layout;
 	};
 
 	struct
 	{
-		VkQueue queue;
-		VkCommandPool command_pool;
-		VkCommandBuffer command_buffer;
-		VkSemaphore semaphore;
+		VkQueue               queue;
+		VkCommandPool         command_pool;
+		VkCommandBuffer       command_buffer;
+		VkSemaphore           semaphore;
 		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet descriptor_set;
-		uint32_t queue_family_index;
+		VkDescriptorSet       descriptor_set;
+		uint32_t              queue_family_index;
 
 		struct
 		{
@@ -98,7 +99,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		} pipelines;
 	} compute;
 
-
+	VkPhysicalDeviceSubgroupProperties subgroups_properties;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();

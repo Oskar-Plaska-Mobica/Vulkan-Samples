@@ -14,12 +14,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+*/
 
- #extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_basic : enable
 
- layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
- void main()
- {
- }
+layout(rgba32f, binding = 0) uniform image2D imgOutput;
+
+
+void main()
+{
+    vec4 value = vec4(0.0, 0.0, 0.0, 1.0);
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    float width = 1000;
+
+    value.x = mod(float(texelCoord.x), width) / (gl_NumWorkGroups.x * gl_WorkGroupSize.x);
+    value.y = float(texelCoord.y)/(gl_NumWorkGroups.y*gl_WorkGroupSize.y);
+    imageStore(imgOutput, texelCoord, value);
+}
