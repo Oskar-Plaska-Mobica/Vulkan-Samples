@@ -125,25 +125,25 @@ vk::ShaderModule create_shader_module(vk::Device device, const char *path)
 	                                                                                {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
 	                                                                                {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation},
 	                                                                                {"vert", vk::ShaderStageFlagBits::eVertex}};
-	vkb::HPPGLSLCompiler                                        glsl_compiler;
+	vkb::HPPShaderCompiler                                      shader_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
 
 	std::string file_ext = path;
 
-	// Extract extension name from the glsl shader file
+	// Extract extension name from the shader file
 	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
 
 	std::vector<uint32_t> spirvCode;
 	std::string           info_log;
 
-	// Compile the GLSL source
+	// Compile the shader source
 	auto stageIt = shader_stage_map.find(file_ext);
 	if (stageIt == shader_stage_map.end())
 	{
 		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
 	}
-	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
+	if (!shader_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return nullptr;
