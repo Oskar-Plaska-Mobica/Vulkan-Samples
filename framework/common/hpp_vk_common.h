@@ -137,13 +137,13 @@ inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass rend
 
 inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
                                              vk::PipelineCache                                         pipeline_cache,
-                                             std::array<vk::PipelineShaderStageCreateInfo, 2> const   &shader_stages,
-                                             vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
+                                             std::array<vk::PipelineShaderStageCreateInfo, 2> const &  shader_stages,
+                                             vk::PipelineVertexInputStateCreateInfo const &            vertex_input_state,
                                              vk::PrimitiveTopology                                     primitive_topology,
                                              vk::CullModeFlags                                         cull_mode,
                                              vk::FrontFace                                             front_face,
                                              std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
-                                             vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
+                                             vk::PipelineDepthStencilStateCreateInfo const &           depth_stencil_state,
                                              vk::PipelineLayout                                        pipeline_layout,
                                              vk::RenderPass                                            render_pass)
 {
