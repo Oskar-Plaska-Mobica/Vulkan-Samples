@@ -677,7 +677,12 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 /**
  * @brief Initializes the Vulkan pipeline.
  */
+<<<<<<< Updated upstream
 void HPPHelloTriangle::init_pipeline()
+=======
+/*
+vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
+>>>>>>> Stashed changes
 {
 	// Create a blank pipeline layout.
 	// We are not binding any resources to the pipeline in this first sample.
@@ -709,9 +714,88 @@ void HPPHelloTriangle::init_pipeline()
 	                                                 pipeline_layout,        // We need to specify the pipeline layout
 	                                                 render_pass);           // and the render pass up front as well
 
+<<<<<<< Updated upstream
 	// Pipeline is baked, we can delete the shader modules now.
 	device.destroyShaderModule(shader_stages[0].module);
 	device.destroyShaderModule(shader_stages[1].module);
+=======
+	return device.createShaderModule({{}, spirvCode});
+}
+*/
+vk::SwapchainKHR
+    HPPHelloTriangle::create_swapchain(vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain)
+{
+	vk::SurfaceCapabilitiesKHR surface_properties = gpu.getSurfaceCapabilitiesKHR(surface);
+
+	// Determine the number of vk::Image's to use in the swapchain.
+	// Ideally, we desire to own 1 image at a time, the rest of the images can
+	// either be rendered to and/or being queued up for display.
+	uint32_t desired_swapchain_images = surface_properties.minImageCount + 1;
+	if ((surface_properties.maxImageCount > 0) && (desired_swapchain_images > surface_properties.maxImageCount))
+	{
+		// Application must settle for fewer images than desired.
+		desired_swapchain_images = surface_properties.maxImageCount;
+	}
+
+	// Figure out a suitable surface transform.
+	vk::SurfaceTransformFlagBitsKHR pre_transform =
+	    (surface_properties.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surface_properties.currentTransform;
+
+	// Find a supported composite type.
+	vk::CompositeAlphaFlagBitsKHR composite = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+	if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eOpaque)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+	}
+	else if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::eInherit;
+	}
+	else if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::ePreMultiplied;
+	}
+	else if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::ePostMultiplied;
+	}
+
+	// FIFO must be supported by all implementations.
+	vk::PresentModeKHR swapchain_present_mode = vk::PresentModeKHR::eFifo;
+
+	vk::SwapchainCreateInfoKHR swapchain_create_info;
+	swapchain_create_info.surface            = surface;
+	swapchain_create_info.minImageCount      = desired_swapchain_images;
+	swapchain_create_info.imageFormat        = surface_format.format;
+	swapchain_create_info.imageColorSpace    = surface_format.colorSpace;
+	swapchain_create_info.imageExtent.width  = swapchain_extent.width;
+	swapchain_create_info.imageExtent.height = swapchain_extent.height;
+	swapchain_create_info.imageArrayLayers   = 1;
+	swapchain_create_info.imageUsage         = vk::ImageUsageFlagBits::eColorAttachment;
+	swapchain_create_info.imageSharingMode   = vk::SharingMode::eExclusive;
+	swapchain_create_info.preTransform       = pre_transform;
+	swapchain_create_info.compositeAlpha     = composite;
+	swapchain_create_info.presentMode        = swapchain_present_mode;
+	swapchain_create_info.clipped            = true;
+	swapchain_create_info.oldSwapchain       = old_swapchain;
+
+	return device.createSwapchainKHR(swapchain_create_info);
+}
+
+/**
+ * @brief Initializes the Vulkan framebuffers.
+ */
+void HPPHelloTriangle::init_framebuffers()
+{
+	assert(swapchain_data.framebuffers.empty());
+
+	// Create framebuffer for each swapchain image view
+	for (auto &image_view : swapchain_data.image_views)
+	{
+		// create the framebuffer.
+		swapchain_data.framebuffers.push_back(vkb::common::create_framebuffer(device, render_pass, {image_view}, swapchain_data.extent));
+	}
+>>>>>>> Stashed changes
 }
 
 /**
