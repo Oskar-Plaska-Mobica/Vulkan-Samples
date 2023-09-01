@@ -165,15 +165,20 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Loads in a ktx 2D texture
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eRepeat.
 	 */
-	HPPTexture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
+	HPPTexture
+	    load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat);
 
 	/**
 	 * @brief Loads in a ktx 2D texture array
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
+	 * @param address_mode The address mode to use in u-, v-, and w-direction. Defaults to /c vk::SamplerAddressMode::eClampToEdge.
 	 */
-	HPPTexture load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type);
+	HPPTexture load_texture_array(const std::string          &file,
+	                              vkb::sg::Image::ContentType content_type,
+	                              vk::SamplerAddressMode      address_mode = vk::SamplerAddressMode::eClampToEdge);
 
 	/**
 	 * @brief Loads in a ktx 2D texture cubemap
@@ -312,6 +317,11 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @param drawer The drawer from the gui to draw certain elements
 	 */
 	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer);
+
+	/**
+	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
+	 */
+	virtual void prepare_gui();
 
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */
