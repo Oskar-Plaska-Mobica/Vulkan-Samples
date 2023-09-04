@@ -17,6 +17,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 include(android_package)
+include(FindVulkan)
 
 # create sample app project
 project(vulkan_samples LANGUAGES C CXX)
@@ -29,6 +30,14 @@ set(SRC
 )
 
 source_group("\\" FILES ${SRC})
+
+IF (NOT Vulkan_FOUND)
+    find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/libs/vulkan)
+    IF (Vulkan_LIBRARY)
+        set(Vulkan_FOUND ON)
+        MESSAGE("Using bundled Vulkan library version")
+    ENDIF()
+ENDIF()
 
 # select target type based on platform
 if(ANDROID)
@@ -81,3 +90,23 @@ if(MSVC)
         set_target_properties(${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${SUFFIX} ${CMAKE_CURRENT_BINARY_DIR}/lib/${CONFIG_DIR}/${TARGET_ARCH})
     endforeach()
 endif()
+
+foreach(SHADER_FILE_HLSL ${SHADER_FILES_HLSL})
+	message(STATUS ${SHADER_FILE_HLSL})
+
+    cmake_path(GET SHADER_FILE_HLSL EXTENSION LAST_ONLY SHADER_FILE_HLSL_EXTENSION)
+    cmake_path(GET SHADER_FILE_HLSL STEM LAST_ONLY SHADER_FILE_HLSL_NAME)
+
+
+    if(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".vert")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T vs_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+    elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".frag")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T ps_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+    elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rgen")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+    elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rmiss")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+    elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rchit")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+    endif()
+endforeach()

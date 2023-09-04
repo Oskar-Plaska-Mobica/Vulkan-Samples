@@ -28,3 +28,9 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "hlsl_shaders/hlsl_shader.vert"
         "hlsl_shaders/hlsl_shader.frag")
+
+set(SHADER_FILES_HLSL
+    ${PROJECT_SOURCE_DIR}/shaders/hlsl_shaders/hlsl_shader.vert
+    ${PROJECT_SOURCE_DIR}/shaders/hlsl_shaders/hlsl_shader.frag
+    CACHE INTERNAL ""
+)
