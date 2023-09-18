@@ -45,6 +45,21 @@ endif()
 
 cmake_minimum_required(VERSION 3.16)
 
+include(FindVulkan)
+
+IF (NOT Vulkan_FOUND)
+    find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/libs/vulkan)
+    IF (Vulkan_LIBRARY)
+        set(Vulkan_FOUND ON)
+        MESSAGE("Using bundled Vulkan library version")
+    ENDIF()
+ENDIF()
+
+IF (NOT Vulkan_dxc_EXECUTABLE)
+    set(Vulkan_dxc_EXECUTABLE ${Vulkan_INCLUDE_DIR}/../Bin/dxc.exe)
+    MESSAGE("Setting dxc path manually")
+ENDIF()
+
 # globally add VKB_DEBUG for the debug build
 add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)
 
