@@ -56,7 +56,11 @@ IF (NOT Vulkan_FOUND)
 ENDIF()
 
 IF (NOT Vulkan_dxc_EXECUTABLE)
-    set(Vulkan_dxc_EXECUTABLE ${Vulkan_INCLUDE_DIR}/../Bin/dxc.exe)
+	if(WIN32)
+		set(Vulkan_dxc_EXECUTABLE ${Vulkan_INCLUDE_DIR}/../Bin/dxc.exe)
+	elseif(UNIX OR ANDROID)
+		set(Vulkan_dxc_EXECUTABLE /usr/bin/dxc)
+	endif()
     MESSAGE("Setting dxc path manually")
 ENDIF()
 

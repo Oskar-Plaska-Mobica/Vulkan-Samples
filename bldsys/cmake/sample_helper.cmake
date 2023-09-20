@@ -214,7 +214,8 @@ function(compile_shaders)
 
 	if(DEFINED SHADERS_HLSL)
 		set(FAKE_TARGET ${PROJECT_NAME}_hlsl_shaders)
-		add_custom_target(${FAKE_TARGET} DEPENDS ${PROJECT_NAME})
+		add_custom_target(${FAKE_TARGET})
+		add_dependencies(${PROJECT_NAME} ${FAKE_TARGET})
 
 		foreach(SHADER_FILE_HLSL ${SHADERS_HLSL})
 
