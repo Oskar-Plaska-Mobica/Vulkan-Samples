@@ -174,6 +174,7 @@ ____
 * Visual Studio 2017 or above
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
+* Vulkan SDK
 
 === Clang Format and Visual Studio
 
@@ -185,6 +186,7 @@ Go to the http://releases.llvm.org/download.html[LLVM downloads page] to get cla
 
 === Build with CMake
 
+Make sure you have VULKAN_SDK variable set in the system and pointing to your installation of Vulkan SDK.
 ____
 Please make sure, when running any sample, that you either:
 
@@ -238,12 +240,15 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 * C{pp}14 Compiler
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
+* Vulkan SDK
 
 ----
 sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
 ----
 
 === Build with CMake
+
+Make sure you have VULKAN_SDK variable set in the system and pointing to your installation of Vulkan SDK.
 
 `Step 1.` The following command will generate the project
 
@@ -307,6 +312,7 @@ For all dependencies set the following environment variables:
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
 * <<performance-data,Performance data>>
+* Vulkan SDK
 
 ____
 We use this environment in the CI https://github.com/KhronosGroupActions/android-ndk-build[Android NDK Repository]
@@ -323,6 +329,8 @@ Their versions are configured in the https://github.com/KhronosGroup/Vulkan-Samp
 when updating these versions, refer to https://developer.android.com/studio/projects/install-ndk#default-ndk-per-agp[the official documentation for the recommended combinations].
 
 === Build with Gradle
+
+Make sure you have VULKAN_SDK variable set in the system and pointing to your installation of Vulkan SDK and visible to Android Studio.
 
 ==== Generate the gradle project
 
